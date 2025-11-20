@@ -1,0 +1,5 @@
+{
+  "name": "FightNight Pro",
+  "description": "A comprehensive combat sports platform featuring event schedules, fighter profiles, leaderboards, and media. Includes an admin dashboard for managing content.",
+  "requestFramePermissions": []
+}
