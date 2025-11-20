@@ -1,8 +1,166 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { dataService, socketService } from '../services/mockData';
-import { FightWithFighters, Prediction, FightUpdate } from '../types';
-import { MapPin, Calendar, Trophy, Radio, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { FightWithFighters, Prediction, FightUpdate, Fighter } from '../types';
+import { MapPin, Calendar, Trophy, Radio, CheckCircle, XCircle, BarChart2, Activity, Zap } from 'lucide-react';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
+  Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis 
+} from 'recharts';
+
+const TaleOfTheTapeVisualizer = ({ fighterA, fighterB }: { fighterA: Fighter, fighterB: Fighter }) => {
+  const [activeTab, setActiveTab] = useState<'PHYSICAL' | 'MATRIX' | 'METHODS'>('PHYSICAL');
+
+  // Prepare Data
+  const physicalData = [
+    { name: 'Height', A: fighterA.heightCm || 0, B: fighterB.heightCm || 0, unit: 'cm' },
+    { name: 'Reach', A: fighterA.reachCm || 0, B: fighterB.reachCm || 0, unit: 'cm' },
+  ];
+
+  const totalFightsA = fighterA.recordWins + fighterA.recordLosses + fighterA.recordDraws;
+  const totalFightsB = fighterB.recordWins + fighterB.recordLosses + fighterB.recordDraws;
+
+  // Normalize for Radar Chart (Rough approximations for visual balance)
+  const radarData = [
+    { subject: 'Experience', A: Math.min(totalFightsA * 3, 100), B: Math.min(totalFightsB * 3, 100), fullMark: 100 },
+    { subject: 'Striking', A: Math.min((fighterA.koWins / (fighterA.recordWins || 1)) * 100, 100), B: Math.min((fighterB.koWins / (fighterB.recordWins || 1)) * 100, 100), fullMark: 100 },
+    { subject: 'Grappling', A: Math.min((fighterA.submissionWins / (fighterA.recordWins || 1)) * 100, 100), B: Math.min((fighterB.submissionWins / (fighterB.recordWins || 1)) * 100, 100), fullMark: 100 },
+    { subject: 'Win %', A: Math.min((fighterA.recordWins / totalFightsA) * 100, 100), B: Math.min((fighterB.recordWins / totalFightsB) * 100, 100), fullMark: 100 },
+    { subject: 'Endurance', A: Math.min((fighterA.decisionWins / (fighterA.recordWins || 1)) * 100, 100), B: Math.min((fighterB.decisionWins / (fighterB.recordWins || 1)) * 100, 100), fullMark: 100 },
+  ];
+
+  const methodsData = [
+    { method: 'KO/TKO', A: fighterA.koWins, B: fighterB.koWins },
+    { method: 'Submission', A: fighterA.submissionWins, B: fighterB.submissionWins },
+    { method: 'Decision', A: fighterA.decisionWins, B: fighterB.decisionWins },
+  ];
+
+  return (
+    <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
+        {/* Tabs */}
+        <div className="flex border-b border-zinc-800">
+            <button 
+                onClick={() => setActiveTab('PHYSICAL')}
+                className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'PHYSICAL' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+                <Activity className="w-4 h-4" /> Physical
+            </button>
+            <button 
+                onClick={() => setActiveTab('MATRIX')}
+                className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'MATRIX' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+                <Zap className="w-4 h-4" /> Skills Matrix
+            </button>
+            <button 
+                onClick={() => setActiveTab('METHODS')}
+                className={`flex-1 py-4 text-sm font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${activeTab === 'METHODS' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-zinc-300'}`}
+            >
+                <BarChart2 className="w-4 h-4" /> Victory Path
+            </button>
+        </div>
+
+        <div className="p-6 md:p-8 min-h-[400px] flex flex-col justify-center">
+            
+            {/* Header Names */}
+            <div className="flex justify-between items-center mb-8 text-xl font-black uppercase italic">
+                <span className="text-white">{fighterA.name}</span>
+                <span className="text-red-600">VS</span>
+                <span className="text-white">{fighterB.name}</span>
+            </div>
+
+            {activeTab === 'PHYSICAL' && (
+                <div className="space-y-8">
+                    {/* Stance Comparison (Text) */}
+                    <div className="flex justify-between items-center border-b border-zinc-800 pb-4">
+                        <div className="text-2xl font-bold text-white">{fighterA.stance || 'Orthodox'}</div>
+                        <div className="text-xs text-zinc-500 uppercase tracking-widest">Stance</div>
+                        <div className="text-2xl font-bold text-white">{fighterB.stance || 'Orthodox'}</div>
+                    </div>
+                    
+                    {/* Age (Simulated) */}
+                    <div className="flex justify-between items-center border-b border-zinc-800 pb-4">
+                        <div className="text-2xl font-bold text-white">34</div>
+                        <div className="text-xs text-zinc-500 uppercase tracking-widest">Age</div>
+                        <div className="text-2xl font-bold text-white">32</div>
+                    </div>
+
+                    {/* Height & Reach Bars */}
+                    <div className="space-y-6">
+                        {physicalData.map((stat) => (
+                             <div key={stat.name}>
+                                <div className="flex justify-between text-xs text-zinc-500 uppercase font-bold mb-2">
+                                    <span>{stat.A} {stat.unit}</span>
+                                    <span>{stat.name}</span>
+                                    <span>{stat.B} {stat.unit}</span>
+                                </div>
+                                <div className="flex h-4 bg-zinc-800 rounded-full overflow-hidden relative">
+                                    {/* Middle Line */}
+                                    <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-zinc-950 z-10"></div>
+                                    
+                                    {/* Fighter A Bar (Right aligned in left half) */}
+                                    <div className="w-1/2 flex justify-end">
+                                        <div 
+                                            className="h-full bg-white rounded-l-full" 
+                                            style={{ width: `${(stat.A / 250) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                    
+                                    {/* Fighter B Bar (Left aligned in right half) */}
+                                    <div className="w-1/2 flex justify-start">
+                                        <div 
+                                            className="h-full bg-red-600 rounded-r-full" 
+                                            style={{ width: `${(stat.B / 250) * 100}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                             </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {activeTab === 'MATRIX' && (
+                <div className="h-[350px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RadarChart outerRadius={110} data={radarData}>
+                            <PolarGrid stroke="#3f3f46" />
+                            <PolarAngleAxis dataKey="subject" tick={{ fill: '#a1a1aa', fontSize: 12 }} />
+                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                            <Radar name={fighterA.name} dataKey="A" stroke="#ffffff" strokeWidth={3} fill="#ffffff" fillOpacity={0.3} />
+                            <Radar name={fighterB.name} dataKey="B" stroke="#dc2626" strokeWidth={3} fill="#dc2626" fillOpacity={0.3} />
+                            <Legend wrapperStyle={{ paddingTop: '20px' }}/>
+                            <Tooltip 
+                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px', color: '#fff' }}
+                                itemStyle={{ color: '#fff' }}
+                            />
+                        </RadarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+
+            {activeTab === 'METHODS' && (
+                <div className="h-[350px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={methodsData} layout="vertical" margin={{ left: 20, right: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#3f3f46" />
+                            <XAxis type="number" stroke="#71717a" hide />
+                            <YAxis dataKey="method" type="category" stroke="#a1a1aa" width={80} />
+                            <Tooltip 
+                                cursor={{fill: '#27272a'}}
+                                contentStyle={{ backgroundColor: '#18181b', border: '1px solid #27272a', borderRadius: '8px', color: '#fff' }}
+                            />
+                            <Legend />
+                            <Bar dataKey="A" name={fighterA.name} fill="#ffffff" radius={[0, 4, 4, 0]} barSize={20} />
+                            <Bar dataKey="B" name={fighterB.name} fill="#dc2626" radius={[0, 4, 4, 0]} barSize={20} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            )}
+        </div>
+    </div>
+  );
+};
+
 
 const FightDetail = ({ user }: { user?: any }) => {
   const { id } = useParams();
@@ -222,25 +380,13 @@ const FightDetail = ({ user }: { user?: any }) => {
             </div>
         )}
 
-        {/* Tale of the Tape */}
-        <div className="max-w-3xl mx-auto mt-20 bg-zinc-900 rounded-xl border border-zinc-800 p-8">
-          <h3 className="text-center text-xl font-black text-white uppercase mb-8 tracking-widest">Tale of the Tape</h3>
-          
-          <div className="space-y-6">
-            {[
-              { label: 'Country', valA: fight.fighterA.country, valB: fight.fighterB.country },
-              { label: 'Height', valA: `${fight.fighterA.heightCm} cm`, valB: `${fight.fighterB.heightCm} cm` },
-              { label: 'Reach', valA: `${fight.fighterA.reachCm} cm`, valB: `${fight.fighterB.reachCm} cm` },
-              { label: 'KO Wins', valA: fight.fighterA.koWins, valB: fight.fighterB.koWins },
-              { label: 'Sub Wins', valA: fight.fighterA.submissionWins, valB: fight.fighterB.submissionWins },
-            ].map((stat, i) => (
-              <div key={i} className="flex justify-between items-center border-b border-zinc-800 pb-4 last:border-0 last:pb-0">
-                <div className="w-1/3 text-right font-bold text-zinc-300">{stat.valA}</div>
-                <div className="w-1/3 text-center text-xs text-zinc-600 uppercase font-bold tracking-widest">{stat.label}</div>
-                <div className="w-1/3 text-left font-bold text-zinc-300">{stat.valB}</div>
-              </div>
-            ))}
-          </div>
+        {/* Interactive Tale of the Tape */}
+        <div className="max-w-4xl mx-auto mt-20">
+             <div className="text-center mb-8">
+                 <h3 className="text-2xl font-black text-white uppercase tracking-widest">Tale of the Tape</h3>
+                 <p className="text-zinc-500 text-sm">Interactive Fighter Comparison</p>
+             </div>
+             <TaleOfTheTapeVisualizer fighterA={fight.fighterA} fighterB={fight.fighterB} />
         </div>
       </div>
     </div>

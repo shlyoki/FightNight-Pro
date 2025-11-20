@@ -16,6 +16,7 @@ export interface Fighter {
   country: string;
   gym?: string;
   weightClass: string;
+  stance?: 'Orthodox' | 'Southpaw' | 'Switch'; 
   recordWins: number;
   recordLosses: number;
   recordDraws: number;
