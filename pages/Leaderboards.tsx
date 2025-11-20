@@ -7,14 +7,19 @@ const Leaderboards = () => {
   const [activeTab, setActiveTab] = useState<'FIGHTERS' | 'PREDICTIONS'>('FIGHTERS');
   const [fighters, setFighters] = useState<Fighter[]>([]);
   const [userStats, setUserStats] = useState<{userEmail: string, correct: number, total: number}[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      const f = await dataService.getFighters();
-      setFighters(f.sort((a, b) => b.recordWins - a.recordWins)); // Mock ranking
-      
-      const stats = await dataService.getPredictionLeaderboard();
-      setUserStats(stats);
+      try {
+        const f = await dataService.getFighters();
+        setFighters(f.sort((a, b) => b.recordWins - a.recordWins)); // Mock ranking
+        
+        const stats = await dataService.getPredictionLeaderboard();
+        setUserStats(stats);
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, []);
@@ -41,7 +46,38 @@ const Leaderboards = () => {
       </div>
 
       <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden">
-        {activeTab === 'FIGHTERS' ? (
+        {loading ? (
+             <table className="w-full text-left">
+                <thead className="bg-zinc-950 text-zinc-400 uppercase text-xs tracking-wider font-bold">
+                    <tr>
+                        <th className="p-4 w-16 text-center">Rank</th>
+                        <th className="p-4">Name</th>
+                        <th className="p-4 text-right">Record</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i} className="animate-pulse">
+                            <td className="p-4 text-center">
+                                <div className="h-6 w-6 bg-zinc-800 rounded mx-auto"></div>
+                            </td>
+                            <td className="p-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-zinc-800"></div>
+                                    <div className="space-y-2">
+                                        <div className="h-4 w-32 bg-zinc-800 rounded"></div>
+                                        <div className="h-3 w-20 bg-zinc-800 rounded"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td className="p-4">
+                                <div className="h-4 w-16 bg-zinc-800 rounded ml-auto"></div>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+             </table>
+        ) : activeTab === 'FIGHTERS' ? (
             <table className="w-full text-left">
             <thead className="bg-zinc-950 text-zinc-400 uppercase text-xs tracking-wider font-bold">
                 <tr>

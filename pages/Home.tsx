@@ -49,21 +49,58 @@ const Countdown = ({ targetDate }: { targetDate: string }) => {
 const Home = () => {
   const [nextFight, setNextFight] = useState<FightWithFighters | null>(null);
   const [latestMedia, setLatestMedia] = useState<Media[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
-      const fights = await dataService.getFightsWithFighters();
-      // Find next upcoming fight
-      const upcoming = fights
-        .filter(f => new Date(f.date) > new Date())
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
-      setNextFight(upcoming);
+      try {
+        const fights = await dataService.getFightsWithFighters();
+        // Find next upcoming fight
+        const upcoming = fights
+          .filter(f => new Date(f.date) > new Date())
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0];
+        setNextFight(upcoming);
 
-      const media = await dataService.getMedia();
-      setLatestMedia(media.slice(0, 3));
+        const media = await dataService.getMedia();
+        setLatestMedia(media.slice(0, 3));
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);
+
+  if (loading) {
+    return (
+      <div>
+        {/* Hero Skeleton */}
+        <div className="relative w-full min-h-[85vh] flex items-center bg-zinc-900 overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-12">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-12">
+              <div className="flex-1 space-y-6 w-full">
+                <div className="h-8 w-48 bg-zinc-800 rounded animate-pulse"></div>
+                <div className="space-y-2">
+                   <div className="h-16 w-full md:w-3/4 bg-zinc-800 rounded animate-pulse"></div>
+                   <div className="h-16 w-1/2 md:w-2/3 bg-zinc-800 rounded animate-pulse"></div>
+                </div>
+                <div className="flex space-x-6">
+                   <div className="h-6 w-32 bg-zinc-800 rounded animate-pulse"></div>
+                   <div className="h-6 w-32 bg-zinc-800 rounded animate-pulse"></div>
+                </div>
+                <div className="flex gap-4 pt-4">
+                   <div className="h-12 w-40 bg-zinc-800 rounded animate-pulse"></div>
+                   <div className="h-12 w-40 bg-zinc-800 rounded animate-pulse"></div>
+                </div>
+              </div>
+              <div className="flex-1 w-full flex justify-center">
+                 <div className="w-full max-w-md h-[400px] bg-zinc-800 rounded-2xl animate-pulse opacity-50"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

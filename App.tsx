@@ -134,7 +134,8 @@ const App = () => {
   }, []);
 
   const login = (email: string) => {
-    const mockUser = { id: email, email, role: 'ADMIN' };
+    // Simulate user ID from email for prediction uniqueness
+    const mockUser = { id: email.replace(/[^a-zA-Z0-9]/g, ''), email, role: 'ADMIN' };
     setUser(mockUser);
     localStorage.setItem('fn_user', JSON.stringify(mockUser));
   };
