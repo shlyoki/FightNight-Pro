@@ -1,8 +1,9 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { dataService, socketService } from '../services/mockData';
 import { FightWithFighters, Prediction, FightUpdate, Fighter } from '../types';
-import { MapPin, Calendar, Trophy, Radio, CheckCircle, XCircle, BarChart2, Activity, Zap } from 'lucide-react';
+import { MapPin, Calendar, Trophy, Radio, CheckCircle, XCircle, BarChart2, Activity, Zap, AlertTriangle, History } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis 
@@ -168,6 +169,7 @@ const FightDetail = ({ user }: { user?: any }) => {
   const [updates, setUpdates] = useState<FightUpdate[]>([]);
   const [userPrediction, setUserPrediction] = useState<Prediction | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pastMatchups, setPastMatchups] = useState<FightWithFighters[]>([]);
   const updatesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -176,6 +178,17 @@ const FightDetail = ({ user }: { user?: any }) => {
       const fights = await dataService.getFightsWithFighters();
       const found = fights.find(f => f.id === id);
       setFight(found || null);
+
+      if (found) {
+        // Check for nemesis history
+        const past = fights.filter(f => 
+          f.id !== found.id && 
+          f.status === 'FINISHED' &&
+          ((f.fighterAId === found.fighterAId && f.fighterBId === found.fighterBId) ||
+           (f.fighterAId === found.fighterBId && f.fighterBId === found.fighterAId))
+        );
+        setPastMatchups(past);
+      }
 
       if (user) {
         const pred = await dataService.getUserPrediction(user.id, id);
@@ -240,6 +253,36 @@ const FightDetail = ({ user }: { user?: any }) => {
           </div>
         </div>
       </div>
+
+      {/* Nemesis Alert */}
+      {pastMatchups.length > 0 && (
+        <div className="max-w-3xl mx-auto mt-8 px-4">
+          <div className="bg-amber-900/20 border border-amber-600/50 rounded-xl p-4 flex items-start gap-4 shadow-lg shadow-amber-900/10">
+            <div className="p-2 bg-amber-600/20 rounded-full mt-1">
+              <AlertTriangle className="w-6 h-6 text-amber-500" />
+            </div>
+            <div className="flex-1">
+              <h4 className="text-amber-500 font-black uppercase tracking-wider text-lg">Nemesis Alert: Rematch Detected</h4>
+              <p className="text-zinc-300 text-sm mt-1">
+                These fighters have met {pastMatchups.length} time{pastMatchups.length > 1 ? 's' : ''} before.
+              </p>
+              <div className="mt-3 space-y-2">
+                {pastMatchups.map(past => {
+                   const winner = past.resultWinnerId === fight.fighterAId ? fight.fighterA : fight.fighterB;
+                   return (
+                     <div key={past.id} className="flex items-center text-xs text-zinc-400 bg-black/30 p-2 rounded">
+                        <History className="w-3 h-3 mr-2" />
+                        <span className="font-bold text-white mr-2">{past.eventName}:</span>
+                        <span className="text-amber-500">Winner {winner.name}</span>
+                        <span className="ml-1">by {past.resultMethod}</span>
+                     </div>
+                   );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Matchup & Prediction */}
       <div className="max-w-7xl mx-auto px-4 mt-12">

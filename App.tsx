@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Menu, X, Trophy, Calendar, Users, Video, Shield, User, LogOut } from 'lucide-react';
+import { Menu, X, Trophy, Calendar, Users, Video, Shield, User, LogOut, Gamepad2, UserPlus, Swords } from 'lucide-react';
 import Home from './pages/Home';
 import Fights from './pages/Fights';
 import FightDetail from './pages/FightDetail';
@@ -10,6 +11,9 @@ import Leaderboards from './pages/Leaderboards';
 import MediaPage from './pages/MediaPage';
 import AdminDashboard from './pages/AdminDashboard';
 import Login from './pages/Login';
+import FantasyDojo from './pages/FantasyDojo';
+import JoinFighter from './pages/JoinFighter';
+import Tournaments from './pages/Tournaments';
 
 // --- Components (Layout) ---
 
@@ -20,8 +24,9 @@ const Navbar = ({ user, logout }: { user: any, logout: () => void }) => {
   const navLinks = [
     { name: 'Home', path: '/', icon: <Shield className="w-4 h-4 mr-1" /> },
     { name: 'Fights', path: '/fights', icon: <Calendar className="w-4 h-4 mr-1" /> },
+    { name: 'Tournaments', path: '/tournaments', icon: <Swords className="w-4 h-4 mr-1" /> },
     { name: 'Fighters', path: '/fighters', icon: <Users className="w-4 h-4 mr-1" /> },
-    { name: 'Leaderboards', path: '/leaderboards', icon: <Trophy className="w-4 h-4 mr-1" /> },
+    { name: 'Dojo', path: '/fantasy', icon: <Gamepad2 className="w-4 h-4 mr-1" /> },
     { name: 'Media', path: '/media', icon: <Video className="w-4 h-4 mr-1" /> },
   ];
 
@@ -53,7 +58,10 @@ const Navbar = ({ user, logout }: { user: any, logout: () => void }) => {
             </div>
           </div>
           <div className="hidden md:block">
-            <div className="ml-4 flex items-center md:ml-6">
+            <div className="ml-4 flex items-center md:ml-6 space-x-4">
+              <Link to="/join" className="px-3 py-1.5 border border-zinc-700 rounded text-xs font-bold uppercase tracking-wider text-zinc-300 hover:text-white hover:border-white transition-colors flex items-center">
+                  <UserPlus className="w-3 h-3 mr-1"/> Join Roster
+              </Link>
               {user ? (
                 <div className="flex items-center space-x-4">
                   <span className="text-zinc-500 text-xs hidden lg:block">{user.email}</span>
@@ -98,6 +106,9 @@ const Navbar = ({ user, logout }: { user: any, logout: () => void }) => {
                 {link.name}
               </Link>
             ))}
+            <Link to="/join" onClick={() => setIsOpen(false)} className="block px-3 py-2 text-base font-medium text-red-500 hover:text-white">
+               Join as Fighter
+            </Link>
             {user ? (
               <>
                 <Link to="/admin" onClick={() => setIsOpen(false)} className="block px-3 py-2 rounded-md text-base font-medium text-zinc-300 hover:text-white hover:bg-zinc-800">Admin Dashboard</Link>
@@ -154,9 +165,12 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/fights" element={<Fights />} />
             <Route path="/fights/:id" element={<FightDetail user={user} />} />
+            <Route path="/tournaments" element={<Tournaments />} />
             <Route path="/fighters" element={<Fighters />} />
             <Route path="/fighters/:id" element={<FighterDetail />} />
+            <Route path="/join" element={<JoinFighter />} />
             <Route path="/leaderboards" element={<Leaderboards />} />
+            <Route path="/fantasy" element={<FantasyDojo user={user} />} />
             <Route path="/media" element={<MediaPage />} />
             <Route path="/login" element={<Login onLogin={login} />} />
             <Route path="/admin" element={user ? <AdminDashboard /> : <Navigate to="/login" />} />

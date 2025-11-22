@@ -1,4 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { dataService } from '../services/mockData';
 import { Fighter } from '../types';
 import { Trophy, User } from 'lucide-react';
@@ -89,16 +91,16 @@ const Leaderboards = () => {
             </thead>
             <tbody className="divide-y divide-zinc-800">
                 {fighters.map((fighter, idx) => (
-                <tr key={fighter.id} className="hover:bg-zinc-800/50 transition-colors">
+                <tr key={fighter.id} className="hover:bg-zinc-800/50 transition-colors group">
                     <td className="p-4 text-center font-black text-zinc-500 text-lg">{idx + 1}</td>
                     <td className="p-4">
-                    <div className="flex items-center gap-4">
+                    <Link to={`/fighters/${fighter.id}`} className="flex items-center gap-4 hover:opacity-80 transition-opacity">
                         <img src={fighter.imageUrl} alt="" className="w-10 h-10 rounded-full object-cover bg-zinc-800" />
                         <div>
-                        <div className="font-bold text-white">{fighter.name}</div>
+                        <div className="font-bold text-white group-hover:text-red-500 transition-colors">{fighter.name}</div>
                         <div className="text-xs text-zinc-500">{fighter.gym}</div>
                         </div>
-                    </div>
+                    </Link>
                     </td>
                     <td className="p-4 text-zinc-300 text-sm">{fighter.weightClass}</td>
                     <td className="p-4 text-right font-mono text-zinc-300">{fighter.recordWins}-{fighter.recordLosses}-{fighter.recordDraws}</td>

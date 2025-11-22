@@ -1,11 +1,14 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { dataService } from '../services/mockData';
 import { Fighter } from '../types';
+import { Search } from 'lucide-react';
 
 const Fighters = () => {
   const [fighters, setFighters] = useState<Fighter[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -16,9 +19,30 @@ const Fighters = () => {
     load();
   }, []);
 
+  const filteredFighters = fighters.filter(fighter => 
+    fighter.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (fighter.nickname && fighter.nickname.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-4xl font-black text-white uppercase tracking-tight mb-8">Roster</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <h1 className="text-4xl font-black text-white uppercase tracking-tight">Roster</h1>
+        
+        {/* Search Bar */}
+        <div className="relative w-full md:max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-zinc-500" />
+          </div>
+          <input
+            type="text"
+            className="block w-full pl-10 pr-3 py-3 border border-zinc-800 rounded-lg leading-5 bg-zinc-900 text-zinc-300 placeholder-zinc-500 focus:outline-none focus:bg-zinc-950 focus:border-red-600 focus:ring-1 focus:ring-red-600 sm:text-sm transition-colors shadow-lg"
+            placeholder="Search fighters by name or nickname..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {loading ? (
@@ -39,8 +63,8 @@ const Fighters = () => {
                 </div>
             </div>
           ))
-        ) : (
-          fighters.map((fighter) => (
+        ) : filteredFighters.length > 0 ? (
+          filteredFighters.map((fighter) => (
             <Link key={fighter.id} to={`/fighters/${fighter.id}`} className="group bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:border-red-600 transition-all hover:-translate-y-1">
               <div className="aspect-square overflow-hidden bg-zinc-800">
                 <img src={fighter.imageUrl} alt={fighter.name} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500" />
@@ -59,6 +83,10 @@ const Fighters = () => {
               </div>
             </Link>
           ))
+        ) : (
+            <div className="col-span-full text-center py-20">
+                <p className="text-zinc-500 text-lg font-medium">No fighters found matching "{searchTerm}"</p>
+            </div>
         )}
       </div>
     </div>
